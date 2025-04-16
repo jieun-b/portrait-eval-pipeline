@@ -54,15 +54,15 @@ eval/
 │   ├── fvv/
 │   ├── lia/
 │   └── gt/
-├── animate/
-│   ├── fomm/
-│   │   ├── driving-source/000.png, 001.png, ...
-│   │   └── compare/driving-source.gif
-│   ├── fvv/
-│   ├── lia/
-│   └── gt/
-│       ├── source/
-│       └── driving/
+└── animate/
+    ├── fomm/
+    │   ├── driving-source/000.png, 001.png, ...
+    │   └── compare/driving-source.gif
+    ├── fvv/
+    ├── lia/
+    └── gt/
+        ├── source/
+        └── driving/
 ```
 
 
