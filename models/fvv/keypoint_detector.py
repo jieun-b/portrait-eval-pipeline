@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 
 from sync_batchnorm import SynchronizedBatchNorm2d as BatchNorm2d
-from modules.util import KPHourglass, make_coordinate_grid, AntiAliasInterpolation2d, ResBottleneck
+from .util import KPHourglass, make_coordinate_grid, AntiAliasInterpolation2d, ResBottleneck
 
 
 class KPDetector(nn.Module):

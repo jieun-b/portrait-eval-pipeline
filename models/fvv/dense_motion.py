@@ -1,7 +1,7 @@
 from torch import nn
 import torch.nn.functional as F
 import torch
-from modules.util import Hourglass, make_coordinate_grid, kp2gaussian
+from .util import Hourglass, make_coordinate_grid, kp2gaussian
 
 from sync_batchnorm import SynchronizedBatchNorm3d as BatchNorm3d
 
