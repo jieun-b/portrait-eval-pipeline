@@ -7,7 +7,7 @@ from tqdm import tqdm
 import yaml
 import random
 
-from ..dataset.dataset import FOMM, PairedDataset
+from dataset.dataset import FOMM, PairedDataset
 
 def save_image(tensor, path):
     img = np.transpose(tensor.cpu().numpy(), (1, 2, 0))  # (C, H, W) → (H, W, C)

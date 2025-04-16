@@ -2,7 +2,7 @@ import os
 from argparse import ArgumentParser
 import yaml
 import torch, random, numpy as np
-from ..modules.fvv import Runner
+from modules.fvv import Runner
 
 if __name__ == "__main__":
     parser = ArgumentParser()
