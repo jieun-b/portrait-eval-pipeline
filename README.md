@@ -2,7 +2,6 @@
 
 This repository provides a unified evaluation pipeline for comparing multiple portrait animation models under consistent settings.
 
----
 
 ## 🛠️ Build Environment
 
@@ -13,7 +12,6 @@ conda activate evaluation
 pip install -r requirements.txt
 ```
 
----
 
 ## 📁 Directory Structure
 
@@ -26,17 +24,24 @@ pip install -r requirements.txt
 - `eval/`: Output directory for evaluation results  
   (saved in `eval/{reconstruction, animate}/{model_name}`)
 
----
 
 ## 🚀 Run Inference
 
 ```bash
 python scripts/<model>.py --mode reconstruction --config config/<model>.yaml --checkpoint checkpoint/<model>.pth
-
 python scripts/<model>.py --mode animate --config config/<model>.yaml --checkpoint checkpoint/<model>.pth
 ```
 
----
+
+## 🔧 Dataset Configuration
+
+When running in `animate` mode, make sure the following value is set in your YAML config file:
+
+```bash
+dataset_params:
+  is_full: False
+```
+
 
 ## 💾 Result Format
 
@@ -60,7 +65,6 @@ eval/
 │       └── driving/
 ```
 
----
 
 ## 🔗 References
 
