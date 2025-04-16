@@ -8,11 +8,13 @@ import random
 import imageio
 import collections
 import numpy as np
+import torch.nn.functional as F
 from argparse import ArgumentParser
 from time import gmtime, strftime
 from tqdm import tqdm
 from shutil import copy
 from torch.utils.data import DataLoader
+from scipy.spatial import ConvexHull
 
 from dataset.dataset import FOMM, PairedDataset
 
@@ -112,7 +114,7 @@ def normalize_kp(kp_source, kp_driving, kp_driving_initial, adapt_movement_scale
             jacobian_diff = torch.matmul(kp_driving['jacobian'], torch.inverse(kp_driving_initial['jacobian']))
             kp_new['jacobian'] = torch.matmul(jacobian_diff, kp_source['jacobian'])
 
-    return kp_new  
+    return kp_new
     
 class Logger:
     def __init__(self, log_dir, checkpoint_freq=100, visualizer_params=None, zfill_num=8, log_file_name='log.txt'):
@@ -276,7 +278,7 @@ class Runner:
     def animate(self, dataset, save_dir, g):
         animate_params = self.config['animate_params']
         normalization_params = animate_params['normalization_params']
-
+        
         dataset = PairedDataset(dataset, number_of_pairs=animate_params['num_pairs'])
         dataloader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=1, drop_last=False, generator=g)
 
@@ -297,12 +299,9 @@ class Runner:
                     he_driving = self.he_estimator(driving_frame)
                     kp_driving = keypoint_transformation(kp_canonical, he_driving, self.estimate_jacobian)
 
-                    kp_norm = normalize_kp(
-                        kp_source=kp_source,
-                        kp_driving=kp_driving,
-                        kp_driving_initial=kp_driving_initial,
-                        **normalization_params
-                    )
+                    kp_norm = normalize_kp(kp_source=kp_source, kp_driving=kp_driving,
+                                   kp_driving_initial=kp_driving_initial, use_relative_movement=normalization_params['use_relative_movement'],
+                                   use_relative_jacobian=self.estimate_jacobian, adapt_movement_scale=normalization_params['adapt_movement_scale'])
 
                     out = self.generator(source_frame, kp_source=kp_source, kp_driving=kp_norm)
 
