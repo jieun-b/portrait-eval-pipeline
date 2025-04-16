@@ -84,7 +84,3 @@ animate_params:
     adapt_movement_scale: False
     use_relative_movement: True
     use_relative_jacobian: True
-
-
-save_dir_self: '../eval/self/fvv'
-save_dir_cross: '../eval/cross/fvv'
