@@ -1,16 +1,13 @@
 import os
-from skimage import io, img_as_float32
-from skimage.color import gray2rgb
-from imageio import mimread
 import random
 import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
 import pandas as pd
-import glob
 
 import torchvision.transforms as transforms
 
+from util.util import read_video
 
 class ValidDataset(Dataset): 
     """
@@ -44,6 +41,8 @@ class ValidDataset(Dataset):
                     self.frame_sequences.append((video_name, start_frame))
         else:
             self.videos = test_videos
+        
+        self.pairs_list = None
         
     def __len__(self):
         if self.is_image:
@@ -130,6 +129,8 @@ class FOMM(Dataset):
                     self.frame_sequences.append((video_name, start_frame))
         else:
             self.videos = test_videos
+            
+        self.pairs_list = None
 
     def __len__(self):
         if self.is_full:
@@ -156,15 +157,9 @@ class FOMM(Dataset):
         video_array = video_array[frame_idx]
 
         out = {}
-        if self.is_train:
-            source = np.array(video_array[0], dtype='float32')
-            driving = np.array(video_array[1], dtype='float32')
-
-            out['driving'] = driving.transpose((2, 0, 1))
-            out['source'] = source.transpose((2, 0, 1))
-        else:
-            video = np.array(video_array, dtype='float32')
-            out['video'] = video.transpose((3, 0, 1, 2))
+        
+        video = np.array(video_array, dtype='float32')
+        out['video'] = video.transpose((3, 0, 1, 2))
 
         out['name'] = str(name + '#' + str(start_idx))
 
@@ -200,6 +195,8 @@ class LIA(Dataset):
                     self.frame_sequences.append((video_name, start_frame))
         else:
             self.videos = test_videos
+            
+        self.pairs_list = None
 
     def __len__(self):
         if self.is_full:
