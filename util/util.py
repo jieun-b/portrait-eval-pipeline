@@ -12,6 +12,7 @@ import torch
 import torchvision
 from einops import rearrange
 from PIL import Image
+from skimage import io, img_as_float32
     
 def read_video(name, frame_shape):
     """
