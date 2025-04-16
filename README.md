@@ -28,8 +28,8 @@ pip install -r requirements.txt
 ## 🚀 Run Inference
 
 ```bash
-python scripts/<model>.py --mode reconstruction --config config/<model>.yaml --checkpoint checkpoint/<model>.pth
-python scripts/<model>.py --mode animate --config config/<model>.yaml --checkpoint checkpoint/<model>.pth
+python -m scripts/<model> --mode reconstruction --config config/<model>.yaml --checkpoint checkpoint/<model>.pth
+python -m scripts/<model> --mode animate --config config/<model>.yaml --checkpoint checkpoint/<model>.pth
 ```
 
 
