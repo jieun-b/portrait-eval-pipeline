@@ -60,22 +60,24 @@ dataset_params:
 
 ```bash
 eval/
-├── reconstruction/
+├── animation/
+│   ├── gt/
+│   │   ├── source/
+│   │   └── driving/
 │   ├── fomm/
-│   │   ├── <name1>/000.png, 001.png, ...
-│   │   └── compare/<name1>.gif
+│   │   ├── driving-source/000.png, 001.png, ...
+│   │   └── compare/driving-source.gif
 │   ├── fvv/
 │   ├── lia/
-│   └── gt/
-└── animation/
+│   └── metrics.json
+└── reconstruction/
+    ├── gt/
     ├── fomm/
-    │   ├── driving-source/000.png, 001.png, ...
-    │   └── compare/driving-source.gif
+    │   ├── <name1>/000.png, 001.png, ...
+    │   └── compare/<name1>.gif
     ├── fvv/
     ├── lia/
-    └── gt/
-        ├── source/
-        └── driving/
+    └── metrics.json
 ```
 
 
