@@ -37,13 +37,21 @@ python -m scripts.inference.<model> --mode animation --config config/<model>.yam
 
 ## 📊 Run Evaluation
 
-To evaluate the results (for reconstruction only):
+### Reconstruction
 
 ```bash
 python -m scripts.metrics.reconstruction_eval --gen_dirs fomm fvv lia
 ```
 
 This script computes L1, LPIPS, SSIM, PSNR, AKD, and AED metrics between generated results and ground truth.
+
+### Animation
+
+```bash
+python -m scripts.metrics.animation_eval --gen_dirs fomm fvv lia
+```
+
+This script computes FID and CSIM between generated results and source frame.
 
 
 ## 🔧 Dataset Configuration
