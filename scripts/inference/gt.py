@@ -60,7 +60,7 @@ def save_cross(dataset, save_dir, g, num_pairs):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--config", default="config/fomm.yaml")
-    parser.add_argument("--mode", choices=["reconstruction", "animate"], default="reconstruction")
+    parser.add_argument("--mode", choices=["reconstruction", "animation"], default="reconstruction")
     parser.add_argument("--save_dir", default="eval")
     parser.add_argument("--seed", type=int, default=42)
     opt = parser.parse_args()
@@ -79,8 +79,8 @@ if __name__ == "__main__":
     dataset = FOMM(**config['dataset_params'])
     num_pairs = config['animate_params']['num_pairs']
     
-    if opt.mode == "animate":
-        save_dir = os.path.join(opt.save_dir, "animate", "gt")
+    if opt.mode == "animation":
+        save_dir = os.path.join(opt.save_dir, "animation", "gt")
         save_cross(dataset, save_dir, g, num_pairs)
     elif opt.mode == "reconstruction":
         save_dir = os.path.join(opt.save_dir, "reconstruction", "gt")

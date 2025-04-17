@@ -13,7 +13,42 @@ import torchvision
 from einops import rearrange
 from PIL import Image
 from skimage import io, img_as_float32
+from imageio import mimread, imread, mimsave
     
+def frames2array(file, is_video, image_shape=None, column=0):
+    if is_video:
+        if os.path.isdir(file):
+            images = [imread(os.path.join(file, name))  for name in sorted(os.listdir(file))]
+            video = np.array(images)
+        elif file.endswith('.png') or file.endswith('.jpg'):
+            ### Frames is stacked (e.g taichi ground truth)
+            image = imread(file)
+            if image.shape[2] == 4:
+                image = image[..., :3]
+
+            video = np.moveaxis(image, 1, 0)
+#            print (image_shape)
+            video = video.reshape((-1, ) + image_shape + (3, ))
+            video = np.moveaxis(video, 1, 2)
+        elif file.endswith('.gif') or file.endswith('.mp4'):
+            video = np.array(mimread(file))
+        else:
+            warnings.warn("Unknown file extensions  %s" % file, Warning)
+            return []
+    else:
+        ## Image is given, interpret it as video with one frame
+        image = imread(file)
+        if image.shape[2] == 4:
+            image = image[..., :3]
+        video = image[np.newaxis]
+
+    if image_shape is None:
+        return video
+    else:
+        ### Several images stacked together select one based on column number
+        return video[:, :, (image_shape[1] * column):(image_shape[1] * (column + 1))]
+
+
 def read_video(name, frame_shape):
     """
     Read video which can be:

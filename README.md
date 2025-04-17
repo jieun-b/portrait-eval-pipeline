@@ -19,7 +19,9 @@ pip install -r requirements.txt
 - `checkpoint/`: Pretrained model checkpoints
 - `data/`: Evaluation dataset  
   (expected structure: `data/test/{video_name}/{frame}.jpg`)
-- `scripts/`: Model-specific run scripts and GT (ground truth) saving scripts
+- `scripts/`
+  - `inference/`: Model-specific run scripts and GT (ground truth) saving scripts
+  - `metrics/`: Evaluation scripts
 - `modules/`: Inference logic per model
 - `eval/`: Output directory for evaluation results  
   (saved in `eval/{reconstruction, animate}/{model_name}`)
@@ -28,14 +30,14 @@ pip install -r requirements.txt
 ## 🚀 Run Inference
 
 ```bash
-python -m scripts/<model> --mode reconstruction --config config/<model>.yaml --checkpoint checkpoint/<model>.pth
-python -m scripts/<model> --mode animate --config config/<model>.yaml --checkpoint checkpoint/<model>.pth
+python -m scripts.inference.<model> --mode reconstruction --config config/<model>.yaml --checkpoint checkpoint/<model>.pth
+python -m scripts.inference.<model> --mode animation --config config/<model>.yaml --checkpoint checkpoint/<model>.pth
 ```
 
 
 ## 🔧 Dataset Configuration
 
-When running in `animate` mode, make sure the following value is set in your YAML config file:
+When running in `animation` mode, make sure the following value is set in your YAML config file:
 
 ```bash
 dataset_params:
@@ -54,7 +56,7 @@ eval/
 │   ├── fvv/
 │   ├── lia/
 │   └── gt/
-└── animate/
+└── animation/
     ├── fomm/
     │   ├── driving-source/000.png, 001.png, ...
     │   └── compare/driving-source.gif
