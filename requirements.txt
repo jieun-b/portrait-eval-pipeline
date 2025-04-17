@@ -16,6 +16,7 @@ PyYAML==6.0.2
 scikit_learn==1.6.0
 scipy==1.13.1
 torch==2.0.1
+torchmetrics==1.7.1
 torchvision==0.15.2
 tqdm==4.66.1
 yacs==0.1.8

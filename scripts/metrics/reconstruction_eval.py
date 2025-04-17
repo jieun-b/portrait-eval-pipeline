@@ -12,7 +12,7 @@ from torchmetrics.image import StructuralSimilarityIndexMeasure, PeakSignalNoise
 import lpips
 import pickle
 
-from util import frames2array
+from util.util import frames2array
 from imageio import mimsave
 
 
