@@ -140,7 +140,9 @@ if __name__ == "__main__":
     all_metrics = existing_metrics.copy()
 
     for model in args.gen_dirs:
-        model_path = os.path.join(os.path.dirname(args.gt_path), model)
+        model_path = os.path.join(args.gt_path, "..", model)
+        model_path = os.path.normpath(model_path)
+        
         if model in all_metrics:
             print(f"Skipping {model} (already processed)")
             continue

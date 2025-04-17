@@ -35,6 +35,17 @@ python -m scripts.inference.<model> --mode animation --config config/<model>.yam
 ```
 
 
+## 📊 Run Evaluation
+
+To evaluate the results (for reconstruction only):
+
+```bash
+python -m scripts.metrics.reconstruction_eval --gen_dirs fomm fvv lia
+```
+
+This script computes L1, LPIPS, SSIM, PSNR, AKD, and AED metrics between generated results and ground truth.
+
+
 ## 🔧 Dataset Configuration
 
 When running in `animation` mode, make sure the following value is set in your YAML config file:
