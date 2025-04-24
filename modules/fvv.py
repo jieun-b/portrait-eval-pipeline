@@ -206,28 +206,24 @@ class Logger:
         
 
 class Runner:
-    def __init__(self, config, checkpoint, device_ids):
+    def __init__(self, config, checkpoint):
         self.config = config
-        self.device_ids = device_ids
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
         self.generator = OcclusionAwareGenerator(**config['model_params']['generator_params'],
-                                                 **config['model_params']['common_params']).to(device_ids[0])
+                                                 **config['model_params']['common_params']).to(self.device)
         self.kp_detector = KPDetector(**config['model_params']['kp_detector_params'],
-                                      **config['model_params']['common_params']).to(device_ids[0])
+                                      **config['model_params']['common_params']).to(self.device)
         self.he_estimator = HEEstimator(**config['model_params']['he_estimator_params'],
-                               **config['model_params']['common_params']).to(device_ids[0])
+                               **config['model_params']['common_params']).to(self.device)
         Logger.load_cpk(checkpoint, generator=self.generator, kp_detector=self.kp_detector, he_estimator=self.he_estimator)
 
         self.estimate_jacobian = config['model_params']['common_params']['estimate_jacobian']
-        
-        if torch.cuda.is_available():
-            self.generator = DataParallelWithCallback(self.generator)
-            self.kp_detector = DataParallelWithCallback(self.kp_detector)
-            self.he_estimator = DataParallelWithCallback(self.he_estimator)
             
         self.generator.eval()
         self.kp_detector.eval()
         self.he_estimator.eval()
-
+        
     def get_dataset(self, mode, seed):
         g = torch.Generator()
         g.manual_seed(seed)
@@ -241,8 +237,7 @@ class Runner:
         for it, x in tqdm(enumerate(dataloader), total=len(dataloader)):
             with torch.no_grad():
                 predictions = []
-                if torch.cuda.is_available():
-                    x['video'] = x['video'].cuda()
+                x['video'] = x['video'].to(self.device)
                 driving_video = x['video']  # shape: (B, C, F, H, W)
                 source_frame = driving_video[:, :, 0]  # 첫 프레임
 
@@ -285,8 +280,8 @@ class Runner:
         for it, x in tqdm(enumerate(dataloader), total=len(dataloader)):
             with torch.no_grad():
                 predictions = []
-                driving_video = x['driving_video'].cuda()
-                source_frame = x['source_video'][:, :, 0, :, :].cuda()
+                driving_video = x['driving_video'].to(self.device)
+                source_frame = x['source_video'][:, :, 0, :, :].to(self.device)
 
                 kp_canonical = self.kp_detector(source_frame)
                 he_source = self.he_estimator(source_frame)

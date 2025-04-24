@@ -10,7 +10,6 @@ if __name__ == "__main__":
     parser.add_argument("--mode", choices=["reconstruction", "animation"], default="reconstruction")
     parser.add_argument("--checkpoint", default="checkpoint/lia.pth")
     parser.add_argument("--save_dir", default="eval")
-    parser.add_argument("--device_ids", default="0", type=lambda x: list(map(int, x.split(','))))
     parser.add_argument("--seed", type=int, default=42)
     opt = parser.parse_args()
 
@@ -22,7 +21,7 @@ if __name__ == "__main__":
     np.random.seed(opt.seed)
     random.seed(opt.seed)
 
-    runner = Runner(config, opt.checkpoint, opt.device_ids)
+    runner = Runner(config, opt.checkpoint)
     dataset, g = runner.get_dataset(opt.mode, opt.seed)
 
     save_dir = os.path.join(opt.save_dir, opt.mode, "lia")

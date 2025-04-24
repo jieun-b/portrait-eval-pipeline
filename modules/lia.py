@@ -15,20 +15,20 @@ from util.util import save_videos_grid
 import torch
 
 class Runner:
-    def __init__(self, config, checkpoint, device_ids):
+    def __init__(self, config, checkpoint):
         self.config = config
-        self.device_ids = device_ids
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         self.gen = Generator(
             config['model_params']['size'], 
             config['model_params']['latent_dim_style'], 
             config['model_params']['latent_dim_motion'], 
             config['model_params']['channel_multiplier']
-        ).cuda()
+        ).to(self.device)
         self.gen.load_state_dict(torch.load(checkpoint, map_location=lambda storage, loc: storage)['gen'])
 
         self.gen.eval()
-
+        
     def get_dataset(self, mode, seed):
         g = torch.Generator()
         g.manual_seed(seed)
@@ -43,11 +43,11 @@ class Runner:
             with torch.no_grad():
                 predictions = []
                 driving_video = x['video']  # list of (C, H, W)
-                source_frame = driving_video[0].cuda()
+                source_frame = driving_video[0].to(self.device)
                 f_name = x['name'][0]
 
                 for i, driving_frame in enumerate(driving_video):
-                    driving_frame = driving_frame.cuda()
+                    driving_frame = driving_frame.to(self.device)
                     img_recon = self.gen(source_frame, driving_frame)
                     predictions.append(img_recon.unsqueeze(2))
 
@@ -79,12 +79,12 @@ class Runner:
             with torch.no_grad():
                 predictions = []
                 driving_video = x['driving_video']  # list of (C, H, W)
-                source_frame = x['source_video'][0].cuda()
+                source_frame = x['source_video'][0].to(self.device)
 
-                h_start = self.gen.enc.enc_motion(driving_video[0].cuda())
+                h_start = self.gen.enc.enc_motion(driving_video[0].to(self.device))
 
                 for i, driving_frame in enumerate(driving_video):
-                    driving_frame = driving_frame.cuda()
+                    driving_frame = driving_frame.to(self.device)
                     img_recon = self.gen(source_frame, driving_frame, h_start)
                     predictions.append(img_recon.unsqueeze(2))
 
