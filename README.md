@@ -15,23 +15,41 @@ pip install -r requirements.txt
 
 ## 📁 Directory Structure
 
-- `config/`: Configuration files for each model (`.yaml`)
 - `checkpoint/`: Pretrained model checkpoints
+- `configs/`: Configuration files for each model (`.yaml`)
 - `data/`: Evaluation dataset  
-  (expected structure: `data/test/{video_name}/{frame}.jpg`)
+  (expected structure: `data/test/{video_name}/{frame}.png`)
+- `dataset/`: Dataset definitions 
+- `eval/`: Output directory for evaluation results  
+(saved in `eval/{reconstruction, animate}/{model_name}`)
+- `models/`: Architecture per model
+- `modules/`: Inference logic per model
+- `pretrained_model/`: Local HuggingFace checkpoints
 - `scripts/`
   - `inference/`: Model-specific run scripts and GT (ground truth) saving scripts
   - `metrics/`: Evaluation scripts
-- `modules/`: Inference logic per model
-- `eval/`: Output directory for evaluation results  
-  (saved in `eval/{reconstruction, animate}/{model_name}`)
 
 
 ## 🚀 Run Inference
 
+### Reconstruction
+
 ```bash
-python -m scripts.inference.<model> --mode reconstruction --config config/<model>.yaml --checkpoint checkpoint/<model>.pth
-python -m scripts.inference.<model> --mode animation --config config/<model>.yaml --checkpoint checkpoint/<model>.pth
+python -m scripts.inference.gt --mode reconstruction --config configs/gt.yaml
+python -m scripts.inference.<model> --mode reconstruction --config configs/<model>.yaml --checkpoint checkpoint/<model>.pth
+
+python -m scripts.inference.portrait --mode reconstruction --config configs/portrait_stage1.yaml --tag stage1
+python -m scripts.inference.portrait --mode reconstruction --config configs/portrait_stage2.yaml --tag stage2
+```
+
+### Animation
+
+```bash
+python -m scripts.inference.gt --mode animation --config configs/gt.yaml
+python -m scripts.inference.<model> --mode animation --config configs/<model>.yaml --checkpoint checkpoint/<model>.pth
+
+python -m scripts.inference.portrait --mode animation --config configs/portrait_stage1.yaml --tag stage1
+python -m scripts.inference.portrait --mode animation --config configs/portrait_stage2.yaml --tag stage2
 ```
 
 
@@ -40,7 +58,7 @@ python -m scripts.inference.<model> --mode animation --config config/<model>.yam
 ### Reconstruction
 
 ```bash
-python -m scripts.metrics.reconstruction_eval --gen_dirs fomm fvv lia
+python -m scripts.metrics.reconstruction_eval --gen_dirs fomm fvv lia portrait/stage1 portrait/stage2
 ```
 
 This script computes L1, LPIPS, SSIM, PSNR, AKD, and AED metrics between generated results and ground truth.
@@ -48,7 +66,7 @@ This script computes L1, LPIPS, SSIM, PSNR, AKD, and AED metrics between generat
 ### Animation
 
 ```bash
-python -m scripts.metrics.animation_eval --gen_dirs fomm fvv lia
+python -m scripts.metrics.animation_eval --gen_dirs fomm fvv lia portrait/stage1 portrait/stage2
 ```
 
 This script computes FID and CSIM between generated results and source frame.
@@ -70,21 +88,27 @@ dataset_params:
 eval/
 ├── animation/
 │   ├── gt/
-│   │   ├── source/
-│   │   └── driving/
+│   │   ├── driving/
+│   │   └── source/
 │   ├── fomm/
-│   │   ├── driving-source/000.png, 001.png, ...
-│   │   └── compare/driving-source.gif
+│   │   ├── <driving-source name>/000.png, 001.png, ...
+│   │   └── compare/<driving-source name>.gif
 │   ├── fvv/
 │   ├── lia/
+│   ├── portrait/
+│   │   ├── stage1/
+│   │   └── stage2/
 │   └── metrics.json
 └── reconstruction/
     ├── gt/
     ├── fomm/
-    │   ├── <name1>/000.png, 001.png, ...
-    │   └── compare/<name1>.gif
+    │   ├── <name>/000.png, 001.png, ...
+    │   └── compare/<name>.gif
     ├── fvv/
     ├── lia/
+    ├── portrait/
+    │   ├── stage1/
+    │   └── stage2/
     └── metrics.json
 ```
 
