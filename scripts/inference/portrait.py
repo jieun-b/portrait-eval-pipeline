@@ -3,13 +3,16 @@ import torch
 import random
 import numpy as np
 from omegaconf import OmegaConf
+from argparse import ArgumentParser
+from modules.portrait import Runner
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--config", type=str, default="config/val.yaml")
+    parser.add_argument("--config", type=str, default="config/portrait.yaml")
     parser.add_argument("--mode", choices=["reconstruction", "animation"], default="reconstruction")
     parser.add_argument("--save_dir", default="eval")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--tag", default="stage1")
     opt = parser.parse_args()
     
     config = OmegaConf.load(opt.config)
@@ -32,7 +35,7 @@ if __name__ == "__main__":
     
     dataset, g = runner.get_dataset(opt.mode, opt.seed)
 
-    save_dir = os.path.join(opt.save_dir, opt.mode, "portrait")
+    save_dir = os.path.join(opt.save_dir, opt.mode, "portrait", opt.tag)
     
     if opt.mode == "animation":
         runner.animate(dataset, save_dir, g)
