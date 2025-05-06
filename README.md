@@ -20,8 +20,6 @@ pip install -r requirements.txt
 - `data/`: Evaluation dataset  
   (expected structure: `data/test/{video_name}/{frame}.png`)
 - `dataset/`: Dataset definitions 
-- `eval/`: Output directory for evaluation results  
-(saved in `eval/{reconstruction, animate}/{model_name}`)
 - `models/`: Architecture per model
 - `modules/`: Inference logic per model
 - `pretrained_model/`: Local HuggingFace checkpoints
