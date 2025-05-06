@@ -9,22 +9,23 @@ from skimage.transform import resize
 from torchvision import transforms
 from argparse import ArgumentParser
 from torchmetrics.image import StructuralSimilarityIndexMeasure, PeakSignalNoiseRatio
-import lpips
+import lpips as LPIPS
 import pickle
 
 from util.util import frames2array
 from imageio import mimsave
 
-
-def load_image_sequence(folder_path):
-    transform = transforms.ToTensor()
+def load_image_sequence(folder_path, image_shape=(256, 256)):
+    transform = transforms.Compose([
+        transforms.Resize(image_shape),
+        transforms.ToTensor()
+    ])
     images = []
     for file in sorted(os.listdir(folder_path)):
         if file.endswith(('.png', '.jpg', '.jpeg')):
             img = Image.open(os.path.join(folder_path, file)).convert('RGB')
             images.append(transform(img))
     return torch.stack(images)
-
 
 def extract_face_pose(folder, is_video, image_shape, column):
     import face_alignment
@@ -42,7 +43,6 @@ def extract_face_pose(folder, is_video, image_shape, column):
             out_df['frame_number'].append(i)
             out_df['value'].append(kp)
     return pd.DataFrame(out_df)
-
 
 def extract_face_id(folder, is_video, image_shape, column):
     from OpenFacePytorch.loadOpenFace import prepareOpenFace
@@ -66,7 +66,6 @@ def extract_face_id(folder, is_video, image_shape, column):
             out_df['value'].append(id_vec)
     return pd.DataFrame(out_df)
 
-
 def cmp_metrics(df1, df2):
     scores = []
     for a, b in zip(df1['value'], df2['value']):
@@ -76,20 +75,20 @@ def cmp_metrics(df1, df2):
     return scores
 
 
-def calculate_metrics(gt_path, gen_path, gt_pose, gt_id, df_pose, df_id):
+def calculate_metrics(gt_path, gen_path, image_shape, gt_pose, gt_id, df_pose, df_id):
     l1_list, lpips_list, ssim_list, psnr_list = [], [], [], []
 
-    loss_fn = lpips.LPIPS(net='alex').cuda()
+    lpips = LPIPS.LPIPS(net='alex').cuda()
     ssim = StructuralSimilarityIndexMeasure().cuda()
     psnr = PeakSignalNoiseRatio().cuda()
 
     folders = [f for f in os.listdir(gt_path) if os.path.isdir(os.path.join(gt_path, f)) and f != 'compare']
     for folder in folders:
-        gt_tensor = load_image_sequence(os.path.join(gt_path, folder)).cuda()
-        gen_tensor = load_image_sequence(os.path.join(gen_path, folder)).cuda()
+        gt_tensor = load_image_sequence(os.path.join(gt_path, folder), image_shape).cuda()
+        gen_tensor = load_image_sequence(os.path.join(gen_path, folder), image_shape).cuda()
 
         l1_list.append(torch.abs(gen_tensor - gt_tensor).mean().item())
-        lpips_list.append(loss_fn(gen_tensor, gt_tensor).mean().item())
+        lpips_list.append(lpips(gen_tensor, gt_tensor).mean().item())
         ssim_list.append(ssim(gen_tensor, gt_tensor).item())
         psnr_list.append(psnr(gen_tensor, gt_tensor).item())
 
@@ -149,7 +148,7 @@ if __name__ == "__main__":
         print(f"Evaluating {model}...")
         df_pose = extract_face_pose(model_path, args.is_video, args.image_shape, args.column)
         df_id = extract_face_id(model_path, args.is_video, args.image_shape, args.column)
-        all_metrics[model] = calculate_metrics(args.gt_path, model_path, gt_pose, gt_id, df_pose, df_id)
+        all_metrics[model] = calculate_metrics(args.gt_path, model_path, args.image_shape, gt_pose, gt_id, df_pose, df_id)
 
     with open(args.save_file, 'w') as f:
         json.dump(all_metrics, f, indent=4)

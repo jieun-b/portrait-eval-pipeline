@@ -12,8 +12,11 @@ import cv2
 from insightface.app import FaceAnalysis
 
 
-def load_image_sequence(folder_path):
-    transform = transforms.ToTensor()
+def load_image_sequence(folder_path, image_shape=(256, 256)):
+    transform = transforms.Compose([
+        transforms.Resize(image_shape),
+        transforms.ToTensor()
+    ])
     images = []
     for file in sorted(os.listdir(folder_path)):
         if file.endswith(('.png', '.jpg', '.jpeg')):
@@ -22,17 +25,17 @@ def load_image_sequence(folder_path):
     return torch.stack(images)
 
 
-def calculate_metrics(gt_path, gen_path):
+def calculate_metrics(gt_path, gen_path, image_shape):
     fid_list, csim_list = [], []
 
     fid = FrechetInceptionDistance(feature=2048, normalize=True).cuda()
     app = FaceAnalysis(name='antelopev2', root='checkpoint', providers=['CUDAExecutionProvider'])
-    app.prepare(ctx_id=0, det_size=(256, 256))
+    app.prepare(ctx_id=0, det_size=image_shape)
 
     folders = [f for f in os.listdir(gt_path) if os.path.isdir(os.path.join(gt_path, f)) and f != 'compare']
     for folder in folders:
-        gt_tensor = load_image_sequence(os.path.join(gt_path, folder)).cuda()
-        gen_tensor = load_image_sequence(os.path.join(gen_path, folder)).cuda()
+        gt_tensor = load_image_sequence(os.path.join(gt_path, folder), image_shape).cuda()
+        gen_tensor = load_image_sequence(os.path.join(gen_path, folder), image_shape).cuda()
 
         gt_tensor = gt_tensor.repeat(gen_tensor.shape[0],1,1,1)
 
@@ -75,6 +78,7 @@ if __name__ == "__main__":
     parser.add_argument("--gt_path", type=str, default="eval/animation/gt/source")
     parser.add_argument("--gen_dirs", nargs='+', default=["fomm", "fvv", "lia"], help="Model names under eval/animation/")
     parser.add_argument("--save_file", type=str, default="eval/animation/metrics.json")
+    parser.add_argument("--image_shape", default=(256, 256), type=lambda x: tuple([int(a) for a in x.split(',')]))
     args = parser.parse_args()
 
     os.makedirs(os.path.dirname(args.save_file), exist_ok=True)
@@ -95,7 +99,7 @@ if __name__ == "__main__":
             print(f"Skipping {model} (already processed)")
             continue
         print(f"Evaluating {model}...")
-        all_metrics[model] = calculate_metrics(args.gt_path, model_path)
+        all_metrics[model] = calculate_metrics(args.gt_path, model_path, args.image_shape)
 
     with open(args.save_file, 'w') as f:
         json.dump(all_metrics, f, indent=4)

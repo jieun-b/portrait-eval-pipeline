@@ -10,6 +10,7 @@ lpips==0.1.4
 matplotlib==3.10.1
 numpy==2.0.1
 omegaconf==2.3.0
+onnxruntime==1.21.1
 opencv_python==4.11.0.86
 opencv_python_headless==4.11.0.86
 pandas==2.2.3
@@ -18,6 +19,7 @@ PyYAML==6.0.2
 scipy==1.15.2
 scikit-image==0.25.2
 torch==2.5.1
+torch-fidelity==0.3.0
 torchmetrics==1.7.1
 torchvision==0.20.1
 tqdm==4.67.1
