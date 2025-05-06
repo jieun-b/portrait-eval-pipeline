@@ -235,7 +235,6 @@ class EncoderApp(nn.Module):
         for conv in self.convs:
             h = conv(h)
             res.append(h)
-
         return res[-1].squeeze(-1).squeeze(-1), res[::-1][2:]
 
 
@@ -270,7 +269,7 @@ class Encoder(nn.Module):
     def forward(self, input_source, input_target, h_start=None):
 
         if input_target is not None:
-
+            
             h_source, feats = self.net_app(input_source)
             h_target, _ = self.net_app(input_target)
 

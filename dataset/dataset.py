@@ -1,4 +1,5 @@
 import os
+import cv2
 import random
 import numpy as np
 from PIL import Image
@@ -19,10 +20,14 @@ class ValidDataset(Dataset):
     def __init__(
             self,
             root_dir,
-            sample_size=[512, 512], sample_stride=1, sample_n_frames=16,
+            sample_size=[512, 512], 
+            is_full=True,
+            sample_stride=1, 
+            sample_n_frames=16,
     ):
         self.root_dir = root_dir
         self.sample_size = sample_size
+        self.is_full = is_full
         self.sample_n_frames = sample_n_frames
         
         self.root_dir = os.path.join(root_dir, 'test')
@@ -45,10 +50,10 @@ class ValidDataset(Dataset):
         self.pairs_list = None
         
     def __len__(self):
-        if self.is_image:
-            return len(self.videos)
-        else:
+        if self.is_full:
             return len(self.frame_sequences)
+        else:
+            return len(self.videos)
     
     def get_batch_wo_pose(self, idx):
         if self.is_full:
