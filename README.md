@@ -1,4 +1,4 @@
-# 🧑‍🎨 portrait-eval-pipeline
+# 🧑‍🎨 Portrait Eval Pipeline
 
 This repository provides a **custom evaluation pipeline** to compare a diffusion-based portrait animation model with several prior baselines under consistent settings.
 
