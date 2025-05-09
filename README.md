@@ -97,29 +97,29 @@ Instead, it was developed to ensure fair and consistent evaluation of a custom d
 ```bash
 eval/
 ├── animation/
-│ ├── gt/
-│ │ ├── driving/ # Driving video frames
-│ │ └── source/ # Source image frames
-│ ├── fomm/
-│ │ ├── <pair_id>/ # Generated frames for one source-driving pair
-│ │ └── compare/ # (Optional) gif comparing output vs GT
-│ ├── fvv/
-│ ├── lia/
-│ ├── portrait/
-│ │ ├── stage1/
-│ │ └── stage2/
-│ └── metrics.json
+│  ├── gt/
+│  │  ├── driving/ # Driving video frames
+│  │  └── source/ # Source image frames
+│  ├── fomm/
+│  │  ├── <pair_id>/ # Generated frames for one source-driving pair
+│  │  └── compare/ # (Optional) gif comparing output vs GT
+│  ├── fvv/
+│  ├── lia/
+│  ├── portrait/
+│  │  ├── stage1/
+│  │  └── stage2/
+│  └── metrics.json
 ├── reconstruction/
-│ ├── gt/ # Ground truth video
-│ ├── fomm/
-│ │ ├── <video_id>/ # Generated frames
-│ │ └── compare/
-│ ├── fvv/
-│ ├── lia/
-│ ├── portrait/
-│ │ ├── stage1/
-│ │ └── stage2/
-│ └── metrics.json
+│  ├── gt/ # Ground truth video
+│  ├── fomm/
+│  │  ├── <video_id>/ # Generated frames
+│  │  └── compare/
+│  ├── fvv/
+│  ├── lia/
+│  ├── portrait/
+│  │  ├── stage1/
+│  │  └── stage2/
+│  └── metrics.json
 ```
 
 
