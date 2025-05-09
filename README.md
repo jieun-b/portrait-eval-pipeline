@@ -55,7 +55,8 @@ python -m scripts.inference.portrait --mode animation --config configs/portrait_
 ## 📊 Run Evaluation
 
 ### Self-Reenactment Evaluation
-Reproduces target frames using the same source and driving image.  
+Reproduces target frames using the same source and driving image.
+
 Metrics: `L1`, `PSNR`, `SSIM`, `LPIPS`, `AKD`, `AED`
 
 ```bash
@@ -64,6 +65,7 @@ python -m scripts.metrics.reconstruction_eval --gen_dirs fomm fvv lia portrait/s
 
 ### Cross-Reenactment Evaluation
 Transfers motion from a driving video to a different source image.
+
 Metrics: `FID`, `CSIM`
 
 ```bash
