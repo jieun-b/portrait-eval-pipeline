@@ -1,6 +1,8 @@
-# 🧑‍🎨 Portrait Animation Evaluation
+# 🧑‍🎨 portrait-eval-pipeline
 
-This repository provides a unified evaluation pipeline for comparing multiple portrait animation models under consistent settings.
+This repository provides a **custom evaluation pipeline** to compare a diffusion-based portrait animation model with several prior baselines under consistent settings.
+
+> 📌 *This project was implemented by [jieun-b] to automate and unify inference and evaluation for diffusion-based portrait animation research.*
 
 
 ## 🛠️ Build Environment
@@ -13,24 +15,23 @@ pip install -r requirements.txt
 ```
 
 
-## 📁 Directory Structure
+## 📁 Directory Overview
 
 - `checkpoint/`: Pretrained model checkpoints
-- `configs/`: Configuration files for each model (`.yaml`)
-- `data/`: Evaluation dataset  
-  (expected structure: `data/test/{video_name}/{frame}.png`)
-- `dataset/`: Dataset definitions 
-- `models/`: Architecture per model
+- `configs/`: YAML configuration files per model
+- `data/`: Evaluation dataset (expected structure: `data/test/{video_name}/{frame}.png`)
+- `dataset/`: Dataset definitions
+- `models/`: Architecture definitions
 - `modules/`: Inference logic per model
 - `pretrained_model/`: Local HuggingFace checkpoints
 - `scripts/`
-  - `inference/`: Model-specific run scripts and GT (ground truth) saving scripts
-  - `metrics/`: Evaluation scripts
+  - `inference/`: Model-specific inference + GT saving scripts
+  - `metrics/`: Evaluation metrics
 
 
-## 🚀 Run Inference
+## 🚀 How to Run
 
-### Reconstruction
+### Self-Reenactment Inference (Reconstruction)
 
 ```bash
 python -m scripts.inference.gt --mode reconstruction --config configs/gt.yaml
@@ -40,7 +41,7 @@ python -m scripts.inference.portrait --mode reconstruction --config configs/port
 python -m scripts.inference.portrait --mode reconstruction --config configs/portrait_stage2.yaml --tag stage2
 ```
 
-### Animation
+### Cross-Reenactment Inference (Animation)
 
 ```bash
 python -m scripts.inference.gt --mode animation --config configs/gt.yaml
@@ -53,21 +54,21 @@ python -m scripts.inference.portrait --mode animation --config configs/portrait_
 
 ## 📊 Run Evaluation
 
-### Reconstruction
+### Self-Reenactment Evaluation
+Reproduces target frames using the same source and driving image.  
+Metrics: `L1`, `PSNR`, `SSIM`, `LPIPS`, `AKD`, `AED`
 
 ```bash
 python -m scripts.metrics.reconstruction_eval --gen_dirs fomm fvv lia portrait/stage1 portrait/stage2
 ```
 
-This script computes L1, LPIPS, SSIM, PSNR, AKD, and AED metrics between generated results and ground truth.
-
-### Animation
+### Cross-Reenactment Evaluation
+Transfers motion from a driving video to a different source image.
+Metrics: `FID`, `CSIM`
 
 ```bash
 python -m scripts.metrics.animation_eval --gen_dirs fomm fvv lia portrait/stage1 portrait/stage2
 ```
-
-This script computes FID and CSIM between generated results and source frame.
 
 
 ## 🔧 Dataset Configuration
@@ -80,34 +81,41 @@ dataset_params:
 ```
 
 
-## 💾 Result Format
+## 📌 Scope
+This repository is not intended as a general benchmarking toolkit.
+Instead, it was developed to ensure fair and consistent evaluation of a custom diffusion-based portrait animation model, in comparison with prior works.
+
+💡 For model implementation and full research results, see: [Main Model Repository (TBD)]()
+
+
+## 💾 Output Format
 
 ```bash
 eval/
 ├── animation/
-│   ├── gt/
-│   │   ├── driving/
-│   │   └── source/
-│   ├── fomm/
-│   │   ├── <driving-source name>/000.png, 001.png, ...
-│   │   └── compare/<driving-source name>.gif
-│   ├── fvv/
-│   ├── lia/
-│   ├── portrait/
-│   │   ├── stage1/
-│   │   └── stage2/
-│   └── metrics.json
-└── reconstruction/
-    ├── gt/
-    ├── fomm/
-    │   ├── <name>/000.png, 001.png, ...
-    │   └── compare/<name>.gif
-    ├── fvv/
-    ├── lia/
-    ├── portrait/
-    │   ├── stage1/
-    │   └── stage2/
-    └── metrics.json
+│ ├── gt/
+│ │ ├── driving/ # Driving video frames
+│ │ └── source/ # Source image frames
+│ ├── fomm/
+│ │ ├── <pair_id>/ # Generated frames for one source-driving pair
+│ │ └── compare/ # (Optional) gif comparing output vs GT
+│ ├── fvv/
+│ ├── lia/
+│ ├── portrait/
+│ │ ├── stage1/
+│ │ └── stage2/
+│ └── metrics.json
+├── reconstruction/
+│ ├── gt/ # Ground truth video
+│ ├── fomm/
+│ │ ├── <video_id>/ # Generated frames
+│ │ └── compare/
+│ ├── fvv/
+│ ├── lia/
+│ ├── portrait/
+│ │ ├── stage1/
+│ │ └── stage2/
+│ └── metrics.json
 ```
 
 
