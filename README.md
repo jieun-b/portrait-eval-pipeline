@@ -2,7 +2,7 @@
 
 This repository provides a **custom evaluation pipeline** to compare a diffusion-based portrait animation model with several prior baselines under consistent settings.
 
-> 📌 *This project was implemented by [jieun-b] to automate and unify inference and evaluation for diffusion-based portrait animation research.*
+> 📌 *This project was implemented by Jieun Bae to automate and unify inference and evaluation for diffusion-based portrait animation research.*
 
 
 ## 🛠️ Build Environment
@@ -31,7 +31,7 @@ pip install -r requirements.txt
 
 ## 🚀 How to Run
 
-### Self-Reenactment Inference (Reconstruction)
+### Self-Reenactment Inference
 
 ```bash
 python -m scripts.inference.gt --mode reconstruction --config configs/gt.yaml
@@ -41,7 +41,7 @@ python -m scripts.inference.portrait --mode reconstruction --config configs/port
 python -m scripts.inference.portrait --mode reconstruction --config configs/portrait_stage2.yaml --tag stage2
 ```
 
-### Cross-Reenactment Inference (Animation)
+### Cross-Reenactment Inference
 
 ```bash
 python -m scripts.inference.gt --mode animation --config configs/gt.yaml
@@ -55,8 +55,8 @@ python -m scripts.inference.portrait --mode animation --config configs/portrait_
 ## 📊 Run Evaluation
 
 ### Self-Reenactment Evaluation
-Reproduces target frames using the same source and driving image.
 
+Reproduces target frames using the same source and driving image.
 Metrics: `L1`, `PSNR`, `SSIM`, `LPIPS`, `AKD`, `AED`
 
 ```bash
@@ -64,8 +64,8 @@ python -m scripts.metrics.reconstruction_eval --gen_dirs fomm fvv lia portrait/s
 ```
 
 ### Cross-Reenactment Evaluation
-Transfers motion from a driving video to a different source image.
 
+Transfers motion from a driving video to a different source image.
 Metrics: `FID`, `CSIM`
 
 ```bash
