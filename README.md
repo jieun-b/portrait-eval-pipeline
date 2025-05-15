@@ -89,7 +89,7 @@ dataset_params:
 This repository is not intended as a general benchmarking toolkit.
 Instead, it was developed to ensure fair and consistent evaluation of a custom diffusion-based portrait animation model, in comparison with prior works.
 
-💡 For model implementation and full research results, see: [Main Model Repository (TBD)]()
+💡 For model implementation and full research results, see [this repository](https://github.com/jieun-b/portrait).
 
 
 ## 💾 Output Format
