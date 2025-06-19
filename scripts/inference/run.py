@@ -58,7 +58,7 @@ def load_runner(model_name, config):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--model", required=True, help="Model name (e.g., fomm, followyouremoji)")
+    parser.add_argument("--model", required=True, help="Model name (e.g., fomm, follow-your-emoji)")
     parser.add_argument("--mode", choices=["reconstruction", "animation"], default="reconstruction")
     parser.add_argument("--save_dir", default="eval")
     parser.add_argument("--seed", type=int, default=42)
