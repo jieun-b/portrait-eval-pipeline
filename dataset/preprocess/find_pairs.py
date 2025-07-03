@@ -6,6 +6,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from skimage.transform import resize
 from skimage import img_as_ubyte
+from argparse import ArgumentParser
 import imageio
 import pandas as pd
 
@@ -108,8 +109,8 @@ def find_landmark_pairs(video_dict, fa, video_root, lmk_root, n_driving, target_
                 
 def main():
     parser = ArgumentParser()
-    parser.add_argument("--video_root", type=str)
-    parser.add_argument("--lmk_root", type=str)
+    parser.add_argument("--video_root", type=str, default="data/")
+    parser.add_argument("--lmk_root", type=str, default="data/lmk")
     parser.add_argument("--output_csv", type=str, default="final_pairs.csv")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--n_driving", type=int, default=10)
