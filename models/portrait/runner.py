@@ -91,6 +91,10 @@ class Runner:
                 source = x['tar_gt'][:, 0][0].cpu().numpy()  # (H, W, C)
                 f_name = x['name'][0]
                 
+                gif_path = os.path.join(save_dir, "compare", f"{f_name}.gif")
+                if os.path.exists(gif_path):
+                    continue
+                
                 ref_image_pil = Image.fromarray(source).convert("RGB")
                 gt_images = [Image.fromarray(driving[i]).convert("RGB") for i in range(driving.shape[0])]
 

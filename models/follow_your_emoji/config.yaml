@@ -1,11 +1,11 @@
 dataset_params:
-  root_dir: 'data/'
+  root_dir: '/home/junho/jieun/datasets/vox1_png'
   frame_shape: [256, 256, 3]
   is_full: True
   sample_n_frames: 16
   pairs_list: 'final_pairs.csv'
 
-lmk_dir: 'data/lmk'
+lmk_dir: 'data/lmk_for_fye'
 
 animate_params:
   num_pairs: 100

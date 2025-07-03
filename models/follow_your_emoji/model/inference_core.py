@@ -28,7 +28,7 @@ def load_model_state_dict(model, model_ckpt_path, name):
 
 def generate_landmarks(lmk_extractor, lmk_path, frame_paths):
     if os.path.exists(lmk_path):
-        return
+        return True
     face_results = []
     for p in frame_paths:
         frame_pil = Image.open(p).convert('RGB')

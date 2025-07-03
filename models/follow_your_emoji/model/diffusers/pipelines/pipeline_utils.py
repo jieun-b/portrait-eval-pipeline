@@ -554,7 +554,7 @@ class DiffusionPipeline(ConfigMixin, PushToHubMixin):
         # import it here to avoid circular import
         # diffusers_module = importlib.import_module(__name__.split(".")[0])
         # pipelines = getattr(diffusers_module, "pipelines")
-        from models.followyouremoji.diffusers import pipelines
+        from models.follow_your_emoji.model.diffusers import pipelines
         for name, module in kwargs.items():
             # retrieve library
             if module is None or isinstance(module, (tuple, list)) and module[0] is None:
