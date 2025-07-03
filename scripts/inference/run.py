@@ -11,6 +11,21 @@ def set_seed(seed):
     np.random.seed(seed)
     random.seed(seed)
 
+def set_is_full(config, is_full_value):
+    try:
+        # OmegaConf
+        if hasattr(config, "dataset_params") and hasattr(config.dataset_params, "is_full"):
+            config.dataset_params.is_full = is_full_value
+        if hasattr(config, "data") and hasattr(config.data, "is_full"):
+            config.data.is_full = is_full_value
+    except Exception:
+        # dict
+        if "dataset_params" in config and isinstance(config["dataset_params"], dict):
+            config["dataset_params"]["is_full"] = is_full_value
+        if "data" in config and isinstance(config["data"], dict):
+            config["data"]["is_full"] = is_full_value
+
+
 def load_config(model_name, mode, tag=None):
     base_path = f"models/{model_name}"
 
@@ -27,19 +42,12 @@ def load_config(model_name, mode, tag=None):
     except Exception:
         with open(config_path) as f:
             config = yaml.safe_load(f)
-
-    def set_nested(config, key, value):
-        if isinstance(config, dict):
-            if "dataset_params" in config:
-                config["dataset_params"][key] = value
-        elif hasattr(config, "dataset_params"):
-            setattr(config.dataset_params, key, value)
-
+    
     if mode == "animation":
-        set_nested(config, "is_full", False)
-    if mode == "reconstruction":
-        set_nested(config, "is_full", True)
-
+        set_is_full(config, False)
+    elif mode == "reconstruction":
+        set_is_full(config, True)
+        
     return config
 
 
@@ -58,7 +66,7 @@ def load_runner(model_name, config):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--model", required=True, help="Model name (e.g., fomm, follow-your-emoji)")
+    parser.add_argument("--model", required=True, help="Model name (e.g., fomm, follow_your_emoji)")
     parser.add_argument("--mode", choices=["reconstruction", "animation"], default="reconstruction")
     parser.add_argument("--save_dir", default="eval")
     parser.add_argument("--seed", type=int, default=42)

@@ -74,7 +74,7 @@ def main():
 
     config = {
         "dataset_params": {
-            "root_dir": "data/",
+            "root_dir": "./data",
             "frame_shape": [256, 256, 3],
             "is_full": is_full,
             "sample_n_frames": 16,
