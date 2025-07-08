@@ -2,14 +2,13 @@
 
 This repository provides a **unified evaluation pipeline** for comparing various portrait animation models under consistent inference and evaluation conditions.
 
----
 
 ## 📁 Project Structure
 
 ```
 portrait-eval-pipeline/
 ├── checkpoint/             # Model checkpoints (manually downloaded)
-├── data/                   # Evaluation data
+├── data/                   # Evaluation data (expected structure: `data/test/{video_name}/{frame}.png`)
 ├── dataset/                # Dataset preprocessing and loader
 ├── eval/                   # Generated results (see Output Format)
 ├── models/
@@ -29,7 +28,6 @@ portrait-eval-pipeline/
 └── README.md
 ```
 
----
 
 ## 🧠 Supported Models
 
@@ -47,16 +45,19 @@ portrait-eval-pipeline/
 > Models marked "Unified" run under the same conda environment for reproducible results.  
 > Others must be executed in their original environments.
 
-To set up the unified environment:
+To run the unified models (FOMM, LIA, Diffusion-based), set up the environment:
 
 ```bash
 conda create -n evaluation python=3.11
 conda activate evaluation
 
 pip install -r requirements.txt
+
+python huggingface_download.py
 ```
 
----
+> For the implementation and full research results of the Diffusion-based (ours) model, see [this repository](https://github.com/jieun-b/portrait).
+
 
 ### Checkpoint Downloads
 
@@ -73,7 +74,6 @@ pip install -r requirements.txt
 
 Place all downloaded files into the `checkpoint/` folder.
 
----
 
 ## 🚀 Run Inference
 
@@ -94,7 +94,6 @@ python -m scripts.inference.run --mode animation --model portrait --tag stage2
 
 You can edit or add configs in `models/<model_name>/config.yaml`.
 
----
 
 ## 📊 Run Evaluation
 
@@ -116,7 +115,6 @@ Metrics:
 
 > ID-SIM: ArcFace, AED/APD: MediaPipe, FVD: I3D
 
----
 
 ## 🎨 Optional: Visualization
 
@@ -135,9 +133,6 @@ This produces:
 - labeled grids
 - per-frame outputs (under `eval/{mode}/selected/frames/`)
 
-> `scripts.vis.gather_results` will automatically collect result folders.
-
----
 
 ## 📂 Output Format
 
@@ -170,7 +165,6 @@ eval/
 │   └── metrics.json
 ```
 
----
 
 ## 📌 Notes
 
@@ -178,7 +172,6 @@ eval/
 - Model training, fine-tuning, or custom setups (e.g., X-Portrait) are external to this pipeline.
 - This is built for controlled evaluation and reproducibility across models.
 
----
 
 ## 🔗 References
 
