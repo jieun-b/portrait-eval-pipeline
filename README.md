@@ -68,9 +68,9 @@ python huggingface_download.py
 | X-Portrait         | `model_state-415001.pth`   | [Download](https://drive.google.com/drive/folders/1Bq0n-w1VT5l99CoaVg02hFpqE5eGLo9O) |
 | LivePortrait       | —                          | Run `huggingface_download.py` |
 | Follow-Your-Emoji  | —                          | Run `huggingface_download.py` |
-| Portrait Stage 1   | `portrait_stage1.pth`      | [Download](https://...) |
-| Portrait Stage 2   | `portrait_stage2.pth`      | [Download](https://...) |
-| Portrait Stage 3   | `portrait_stage3.pth`      | [Download](https://...) |
+| Portrait Stage 1   | `portrait_stage1.pth`      | — |
+| Portrait Stage 2   | `portrait_stage2.pth`      | — |
+| Portrait Stage 3   | `portrait_stage3.pth`      | — |
 
 Place all downloaded files into the `checkpoint/` folder.
 
