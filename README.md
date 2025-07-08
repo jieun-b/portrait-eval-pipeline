@@ -37,7 +37,7 @@ portrait-eval-pipeline/
 |--------------------|--------------|
 | FOMM               | Unified (via `requirements.txt`) |
 | LIA                | Unified (via `requirements.txt`) |
-| Diffusion (ours)   | Unified (via `requirements.txt`) |
+| Portrait Stage 1–3 (ours)   | Unified (via `requirements.txt`) |
 | X-Portrait         | Follow [official repo](https://github.com/bytedance/X-Portrait) |
 | LivePortrait       | Follow [official repo](https://github.com/KwaiVGI/LivePortrait) |
 | Follow-Your-Emoji  | Follow [official repo](https://github.com/mayuelala/FollowYourEmoji) |
@@ -45,7 +45,7 @@ portrait-eval-pipeline/
 > Models marked "Unified" run under the same conda environment for reproducible results.  
 > Others must be executed in their original environments.
 
-To run the unified models (FOMM, LIA, Diffusion-based), set up the environment:
+To run the unified models (FOMM, LIA, Portrait Stage 1–3 (ours)), set up the environment:
 
 ```bash
 conda create -n evaluation python=3.11
@@ -56,7 +56,7 @@ pip install -r requirements.txt
 python huggingface_download.py
 ```
 
-> For the implementation and full research results of the Diffusion-based (ours) model, see [this repository](https://github.com/jieun-b/portrait).
+> For the implementation and full research results of the Portrait Stage 1–3 (ours) model, see [this repository](https://github.com/jieun-b/portrait).
 
 
 ### Checkpoint Downloads
@@ -68,9 +68,7 @@ python huggingface_download.py
 | X-Portrait         | `model_state-415001.pth`   | [Download](https://drive.google.com/drive/folders/1Bq0n-w1VT5l99CoaVg02hFpqE5eGLo9O) |
 | LivePortrait       | —                          | Run `huggingface_download.py` |
 | Follow-Your-Emoji  | —                          | Run `huggingface_download.py` |
-| Portrait Stage 1   | `portrait_stage1.pth`      | — |
-| Portrait Stage 2   | `portrait_stage2.pth`      | — |
-| Portrait Stage 3   | `portrait_stage3.pth`      | — |
+| Portrait Stage 1–3 (ours)   | —                          | — |
 
 Place all downloaded files into the `checkpoint/` folder.
 
