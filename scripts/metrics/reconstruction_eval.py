@@ -3,18 +3,11 @@ import json
 import torch
 import random
 import numpy as np
-import pandas as pd
-from PIL import Image
 from tqdm import tqdm
-from skimage.transform import resize
-from torchvision import transforms
 from argparse import ArgumentParser
-from torchmetrics.image import StructuralSimilarityIndexMeasure, PeakSignalNoiseRatio
+from torchmetrics.image import StructuralSimilarityIndexMeasure
 import lpips as LPIPS
-import pickle
 import scipy.linalg
-from util.util import frames2array
-from imageio import mimsave
 from .metric_utils import compute_feature_stats_from_folders, load_image_sequence
 
 def calculate_metrics(gt_path, gen_path, image_shape, device, seeds):
