@@ -94,9 +94,10 @@ Place all downloaded files into the `checkpoint/` folder.
 
 ## 🚀 Run Inference
 
-Split ground-truth sequences for evaluation:
+Prepare ground-truth sequences for evaluation:
 ```bash
 python -m scripts.inference.gt --mode reconstruction
+python -m scripts.inference.gt --mode animation
 ```
 
 Then run inference for each model:
