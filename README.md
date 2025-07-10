@@ -50,9 +50,28 @@ To run the unified models (FOMM, LIA, Portrait Stage 1–3 (ours)), set up the e
 ```bash
 conda create -n evaluation python=3.11
 conda activate evaluation
+```
 
+This project uses **PyTorch 2.5.1**.  
+Install the appropriate version for your system (CPU or specific CUDA version) following the official instructions:
+
+👉 https://pytorch.org/get-started/previous-versions/
+
+Example (CUDA 12.1):
+
+```bash
+conda install pytorch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 pytorch-cuda=12.1 -c pytorch -c nvidia
+```
+
+Then install the remaining dependencies and required assets:
+
+```bash
 pip install -r requirements.txt
 
+# Download MediaPipe model (used for AED/APD metrics)
+wget -q -P checkpoint/ https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task
+
+# Download HuggingFace checkpoints
 python huggingface_download.py
 ```
 
