@@ -1,4 +1,4 @@
-# 🧑‍🔬 Portrait Evaluation Pipeline
+# Portrait Evaluation Pipeline
 
 This repository provides a **unified evaluation pipeline** for comparing various portrait animation models under consistent inference and evaluation conditions.
 
