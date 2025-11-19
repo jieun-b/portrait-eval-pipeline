@@ -1,0 +1,8 @@
+/.vscode
+__pycache__
+/venv
+
+data/
+eval/
+checkpoint/
+pretrained_model/
