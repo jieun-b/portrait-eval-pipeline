@@ -2,14 +2,17 @@ import os
 import torch
 import imageio
 import numpy as np
-
+import torch.nn.functional as F
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
+from ..datasets.frame_path_dataset import FramePathDataset
 from ..datasets.valid_dataset import PairedDataset, sample_subset
 from ..datasets.dataloader import build_valid_dataloader
-from ..datasets.lia import LIA
-from ..models.lia.generator import Generator
+from ..models.liveportrait.config.argument_config import ArgumentConfig
+from ..models.liveportrait.config.inference_config import InferenceConfig
+from ..models.liveportrait.config.crop_config import CropConfig
+from ..models.liveportrait.live_portrait_pipeline import LivePortraitPipeline
 from ..utils import save_videos_grid
 
 
@@ -20,24 +23,31 @@ class Runner:
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.executor = ThreadPoolExecutor(max_workers=num_workers)
-        self.gen = Generator(
-            config['model_params']['size'], 
-            config['model_params']['latent_dim_style'], 
-            config['model_params']['latent_dim_motion'], 
-            config['model_params']['channel_multiplier']
-        ).to(self.device)
         
-        self.gen.load_state_dict(torch.load(self.config['checkpoint'], map_location=lambda storage, loc: storage)['gen'])
-        self.gen.eval()
+        args = ArgumentConfig(
+            flag_pasteback=False,
+            flag_do_crop=False,
+        )
         
+        def partial_fields(target_class, kwargs):
+            return target_class(**{k: v for k, v in kwargs.items() if hasattr(target_class, k)})
+    
+        inference_cfg = partial_fields(InferenceConfig, args.__dict__)
+        crop_cfg = partial_fields(CropConfig, args.__dict__)
+
+        self.pipeline = LivePortraitPipeline(
+            inference_cfg=inference_cfg,
+            crop_cfg=crop_cfg,
+        )
+
     def get_dataset(self, mode, use_subset=False):
         cfg = self.config['dataset_params']
-        dataset = LIA(**cfg, mode=mode)
+        dataset = FramePathDataset(**cfg, mode=mode)
         if use_subset:
             subset = sample_subset(dataset, clips_per_video=2, total_clips=200)
             dataset.frame_sequences = subset
         return dataset
-
+    
     # #----------------------------------------------------------------------------
     
     def run_self(self, dataset, save_dir, seed=None, generator=None):
@@ -56,20 +66,28 @@ class Runner:
             self.process(x, save_dir, generator, is_animation=True)
         self.executor.shutdown(wait=True)
         
-    
+        
     def process(self, x, save_dir, generator, is_animation=False):
         with torch.no_grad():
             if is_animation:
-                driving_video = x['driving_video']
-                source_frame = x['source_video'][0].to(self.device) 
+                driving_video = x['driving_video'].to(self.device) 
+                source_frame = x['source_video'][:,0]
                 f_names = [f"{d}-{s}" for d, s in zip(x['driving_name'], x['source_name'])]
+                driving_paths = x['driving_frames_paths']
+                source_path = x['source_frames_paths']
             else:
-                driving_video = x['video']     # list of (C, H, W)
-                source_frame = driving_video[0].to(self.device)             
+                driving_video = x['video'].to(self.device) 
+                source_frame = driving_video[:,0]            
                 f_names = x['name']
-
-            num_frames = len(driving_video)
-                
+                driving_paths = x['frames_paths']
+                source_path = x['frames_paths']
+        
+            driving_paths = list(map(list, zip(*driving_paths)))
+            source_path = list(map(list, zip(*source_path)))
+            
+            num_frames = driving_video.shape[1]
+            batch_size = driving_video.shape[0]
+            
             gif_paths = [os.path.join(save_dir, "compare", f"{name}.gif") for name in f_names]
             skip_flags = [os.path.exists(path) for path in gif_paths]
 
@@ -77,32 +95,41 @@ class Runner:
             if len(valid_indices) == 0:
                 return
             
-            if is_animation:
-                h_start = self.gen.enc.enc_motion(driving_video[0].to(self.device))
-
             predictions = []
-            for f in range(num_frames):
-                driving_frame = driving_video[f].to(self.device)
-                if is_animation:
-                    img_recon = self.gen(source_frame, driving_frame, h_start)
-                else:
-                    img_recon = self.gen(source_frame, driving_frame)
-                predictions.append(img_recon.unsqueeze(2))
+            for b in range(batch_size):
+                args = ArgumentConfig(
+                    source=source_path[b][0],
+                    driving=driving_paths[b],
+                    flag_pasteback=False,
+                    flag_do_crop=False,
+                )
+                I_p_lst = self.pipeline.execute(args)
         
-            predictions = torch.cat(predictions, dim=2).cpu()
-            source_video  = source_frame.unsqueeze(2).repeat(1,1,num_frames,1,1).cpu()
-            driving_video = torch.stack(driving_video, dim=2).cpu()
-            
+                I_p_tensor_lst = []
+                for i, img_np in enumerate(I_p_lst):  
+                    img_tensor = torch.from_numpy(img_np).permute(2, 0, 1).float() / 127.5 - 1
+                    img_tensor_resized = F.interpolate(
+                        img_tensor.unsqueeze(0), size=(256, 256), mode='bilinear', align_corners=False
+                    ).squeeze(0)
+                    I_p_tensor_lst.append(img_tensor_resized)
+                    
+                prediction = torch.stack(I_p_tensor_lst, dim=1) # [3, T, 256, 256]
+                predictions.append(prediction)
+        
+            predictions = torch.stack(predictions, dim=0).cpu()  
+            source_video = source_frame.unsqueeze(2).repeat(1,1,num_frames,1,1).cpu()
+            driving_video = driving_video.permute(0, 2, 1, 3, 4).cpu()
+        
             for idx in valid_indices:
                 self.executor.submit(
                     self.save_prediction_outputs,
-                    source_video[idx],   
+                    source_video[idx],      
                     driving_video[idx],
                     predictions[idx],
-                    f_names[idx],             
+                    f_names[idx],            
                     save_dir,
                 )
-            
+
             
     def save_prediction_outputs(self, source_video, driving_video, predictions, f_name, save_dir):
         try:

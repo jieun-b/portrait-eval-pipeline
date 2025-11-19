@@ -1,0 +1,7 @@
+dataset_params:
+  root_dir: 'data/'
+  sample_n_frames: 16
+  pairs_list: 'cross_pairs.csv'
+
+animate_params:
+  num_pairs: 100

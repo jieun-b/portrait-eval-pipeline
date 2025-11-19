@@ -15,5 +15,5 @@ def build_valid_dataloader(dataset, batch_size, num_workers, seed=42):
         dataset,
         batch_size=batch_size,
         num_workers=num_workers,
-        generator=g,
+        generator=g
     )

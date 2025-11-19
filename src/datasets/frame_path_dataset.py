@@ -1,49 +1,12 @@
-# Adapted from https://github.com/AliaksandrSiarohin/first-order-model/blob/master/frames_dataset.py
 import os
-import numpy as np
+import torch
+import torchvision.transforms as transforms
 
-from skimage import io, img_as_float32
-from skimage.color import gray2rgb
-from imageio import mimread
-
+from PIL import Image
 from torch.utils.data import Dataset
 
 
-def read_video(name, frame_shape):
-    if os.path.isdir(name):
-        frames = sorted(os.listdir(name))
-        num_frames = len(frames)
-        video_array = np.array(
-            [img_as_float32(io.imread(os.path.join(name, frames[idx]))) for idx in range(num_frames)])
-    elif name.lower().endswith('.png') or name.lower().endswith('.jpg'):
-        image = io.imread(name)
-
-        if len(image.shape) == 2 or image.shape[2] == 1:
-            image = gray2rgb(image)
-
-        if image.shape[2] == 4:
-            image = image[..., :3]
-
-        image = img_as_float32(image)
-
-        video_array = np.moveaxis(image, 1, 0)
-
-        video_array = video_array.reshape((-1,) + frame_shape)
-        video_array = np.moveaxis(video_array, 1, 2)
-    elif name.lower().endswith('.gif') or name.lower().endswith('.mp4') or name.lower().endswith('.mov'):
-        video = np.array(mimread(name))
-        if len(video.shape) == 3:
-            video = np.array([gray2rgb(frame) for frame in video])
-        if video.shape[-1] == 4:
-            video = video[..., :3]
-        video_array = img_as_float32(video)
-    else:
-        raise Exception("Unknown file extensions  %s" % name)
-
-    return video_array
-
-
-class FOMM(Dataset):
+class FramePathDataset(Dataset):
     def __init__(
         self,
         root_dir,
@@ -59,14 +22,20 @@ class FOMM(Dataset):
         self.mode = mode
         self.pairs_list = pairs_list
 
+        self.transform = transforms.Compose([
+            transforms.Resize(self.frame_shape[:2]),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))]
+        )
+        
         test_videos = sorted(os.listdir(self.root_dir))
 
         if self.mode == "self":
             self.frame_sequences = self._prepare_self_sequences(test_videos)
         else:
             self.videos = test_videos
-        
-        
+            
+            
     # ----------------------------
     # Helpers for 'self' mode
     # ----------------------------
@@ -81,49 +50,52 @@ class FOMM(Dataset):
                 start_frame = seq_idx * self.sample_n_frames
                 sequences.append((video_name, start_frame))
         return sequences
-    
-    
+
+
     def _sample_self(self, idx):
         name, start_info = self.frame_sequences[idx]
         path = os.path.join(self.root_dir, name)
-        frames = read_video(path, frame_shape=self.frame_shape)
+        frames = sorted(os.listdir(path))
+        frames_paths = [os.path.join(path, frame) for frame in frames]
         start_idx = start_info
         frame_idx = range(start_idx, start_idx + self.sample_n_frames)
-        return frames, frame_idx, f"{name}#{start_idx}"
-
+        return frames_paths, frame_idx, f"{name}#{start_idx}"
+    
+    
     # ----------------------------
     # Helpers for 'cross' mode
     # ----------------------------
     def _sample_cross(self, idx, start_idx):
         name = self.videos[idx]
         path = os.path.join(self.root_dir, name)
-        frames = read_video(path, frame_shape=self.frame_shape)
+        frames = sorted(os.listdir(path))
+        frames_paths = [os.path.join(path, frame) for frame in frames]
         frame_idx = range(start_idx, start_idx + self.sample_n_frames)
-        return frames, frame_idx, f"{name}#{start_idx}"
-
+        return frames_paths, frame_idx, f"{name}#{start_idx}"
+    
+    
     # ----------------------------
     # Core Dataset methods
     # ----------------------------
     def __len__(self):
         return len(self.frame_sequences) if self.mode == "self" else len(self.videos)
-
+        
     def get_batch(self, idx, start_idx=None):
         if self.mode == "self":
-            frames, frame_idx, name = self._sample_self(idx)
+            frames_paths, frame_idx, name = self._sample_self(idx)
         else:
             if start_idx is None:
                 raise ValueError("cross mode requires explicit start_idx (from PairedDataset).")
-            frames, frame_idx, name = self._sample_cross(idx, start_idx)
-            
-        frames = frames[frame_idx]
+            frames_paths, frame_idx, name = self._sample_cross(idx, start_idx)
 
-        out = {}
+        video = [self.transform(Image.open(frames_paths[i]).convert('RGB')) for i in frame_idx]
+        video = torch.stack(video, dim=0) 
         
-        video = np.array(frames, dtype='float32')
-        out['video'] = video.transpose((3, 0, 1, 2))
-        out['name'] = name
-
-        return out
+        return {
+            "video": video,                       # Tensor
+            "name": name,                         # str
+            "frames_paths": [frames_paths[i] for i in frame_idx],
+        }
     
     def __getitem__(self, idx):
         # PyTorch DataLoader always calls __getitem__(idx) with single index

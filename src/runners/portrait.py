@@ -72,6 +72,12 @@ class Runner:
         self.appearance_unet.load_state_dict(torch.load(reference_unet_path, map_location="cpu"))
         self.lia.load_state_dict(torch.load(lia_model_path, map_location="cpu"))
 
+        self.vae.eval()
+        self.appearance_unet.eval()
+        self.denoising_unet.eval()
+        self.image_encoder.eval()
+        self.lia.eval()
+
         self.init_pipeline(weight_dtype)
 
     def init_pipeline(self, weight_dtype):
@@ -99,7 +105,7 @@ class Runner:
 
     # #----------------------------------------------------------------------------
 
-    def run_self(self, dataset, save_dir, seed=None, generator=None, guidance_scale=3.5):
+    def run_self(self, dataset, save_dir, seed=None, generator=None, guidance_scale=2.75):
         dataloader = build_valid_dataloader(dataset, self.batch_size, self.num_workers, seed)
 
         for it, x in tqdm(enumerate(dataloader), total=len(dataloader)):
@@ -107,7 +113,7 @@ class Runner:
         self.executor.shutdown(wait=True)
 
 
-    def run_cross(self, dataset, save_dir, seed=None, generator=None, guidance_scale=3.5):
+    def run_cross(self, dataset, save_dir, seed=None, generator=None, guidance_scale=2.75):
         dataset = PairedDataset(dataset, number_of_pairs=self.config.animate_params.num_pairs)
         dataloader = build_valid_dataloader(dataset, self.batch_size, self.num_workers, seed)
 

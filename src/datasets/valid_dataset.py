@@ -89,7 +89,7 @@ class ValidDataset(Dataset):
         img = cv2.cvtColor(cv2.imread(os.path.join(path, frame_name)), cv2.COLOR_BGR2RGB)
         return img
 
-    def __getitem__(self, idx, start_idx=None):
+    def get_batch(self, idx, start_idx=None):
         if self.mode == "self":
             src_img, tgt_imgs, name = self._sample_self(idx)
         else:
@@ -97,6 +97,10 @@ class ValidDataset(Dataset):
                 raise ValueError("cross mode requires explicit start_idx (from PairedDataset).")
             src_img, tgt_imgs, name = self._sample_cross(idx, start_idx)
         return dict(src_img=src_img, tgt_imgs=tgt_imgs, name=name)
+
+    def __getitem__(self, idx):
+        # PyTorch DataLoader always calls __getitem__(idx) with single index
+        return self.get_batch(idx)
 
 
 class PairedDataset(Dataset):
@@ -176,8 +180,8 @@ class PairedDataset(Dataset):
             source_start = self._random_start(source_idx)
 
         # Call ValidDataset to actually crop the clips
-        driving = self.initial_dataset.__getitem__(driving_idx, start_idx=driving_start)
-        source = self.initial_dataset.__getitem__(source_idx, start_idx=source_start)
+        driving = self.initial_dataset.get_batch(driving_idx, start_idx=driving_start)
+        source = self.initial_dataset.get_batch(source_idx, start_idx=source_start)
 
         # Add prefixes
         driving = {f"driving_{k}": v for k, v in driving.items()}

@@ -80,7 +80,7 @@ class LIA(Dataset):
     def __len__(self):
         return len(self.frame_sequences) if self.mode == "self" else len(self.videos)
         
-    def __getitem__(self, idx, start_idx=None):
+    def get_batch(self, idx, start_idx=None):
         if self.mode == "self":
             frames_paths, frame_idx, name = self._sample_self(idx)
         else:
@@ -94,7 +94,9 @@ class LIA(Dataset):
         
         out['video'] = video
         out['name'] = name
-        out['frames_paths'] = [frames_paths[i] for i in frame_idx]
         
         return out
     
+    def __getitem__(self, idx):
+        # PyTorch DataLoader always calls __getitem__(idx) with single index
+        return self.get_batch(idx)
