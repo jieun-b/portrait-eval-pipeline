@@ -13,10 +13,9 @@ from transformers import CLIPVisionModelWithProjection
 
 from ..datasets.valid_dataset import ValidDataset, PairedDataset, sample_subset
 from ..datasets.dataloader import build_valid_dataloader
-from ..models.portrait.utils import save_video_frames, get_tensor_transform
 from ..models.portrait.models.LIA.generator import Generator
 from ..models.portrait.models.unet_motion_model import UNetMotionModel
-from ..utils.util import save_videos_grid
+from ..utils import save_videos_grid, save_video_frames, get_tensor_transform
 
 class Runner:
     def __init__(self, config, batch_size=1, num_workers=1):

@@ -117,7 +117,7 @@ def main(args):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--gt_path", type=str, default="eval/self/gt", help="Ground truth folder for self evaluation.")
-    parser.add_argument("--gen_dirs", nargs='+', default=["stage1"], help="Model names under eval/self/")
+    parser.add_argument("--gen_dirs", nargs='+', default=["fomm"], help="Model names under eval/self/")
     parser.add_argument("--save_file", type=str, default="eval/self/metrics.json", help="Path to save metrics JSON file.")
     parser.add_argument("--image_shape", default=(256, 256), type=lambda x: tuple([int(a) for a in x.split(',')]))
     parser.add_argument("--seeds", nargs="+", type=int, default=[0, 42, 123], help="Random seed (used for sampling folders)")

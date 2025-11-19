@@ -15,7 +15,7 @@ from ..datasets.dataloader import build_valid_dataloader
 from ..datasets.fomm import FOMM
 from ..models.fomm.generator import OcclusionAwareGenerator
 from ..models.fomm.keypoint_detector import KPDetector
-from ..utils.util import save_videos_grid
+from ..utils import save_videos_grid
 
 
 def normalize_kp(kp_source, kp_driving, kp_driving_initial, adapt_movement_scale=False,

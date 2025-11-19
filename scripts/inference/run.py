@@ -6,7 +6,7 @@ from omegaconf import OmegaConf
 from argparse import ArgumentParser
 from importlib import import_module
 
-from src.utils.util import set_seed
+from src.utils import set_seed
 
 
 def load_config(model):

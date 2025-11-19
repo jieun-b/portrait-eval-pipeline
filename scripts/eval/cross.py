@@ -159,7 +159,7 @@ def main(args):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--gt_path", type=str, default="eval/cross/gt", help="Ground truth folder for cross evaluation (contains source/driving).")
-    parser.add_argument("--gen_dirs", nargs='+', default=["stage1"], help="Model names under eval/cross/")
+    parser.add_argument("--gen_dirs", nargs='+', default=["fomm"], help="Model names under eval/cross/")
     parser.add_argument("--save_file", type=str, default="eval/cross/metrics.json", help="Path to save metrics JSON file.")
     parser.add_argument("--image_shape", default=(256, 256), type=lambda x: tuple([int(a) for a in x.split(',')]))
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", help="cuda or cpu")

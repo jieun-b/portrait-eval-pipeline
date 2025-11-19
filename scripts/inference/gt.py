@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from src.datasets.valid_dataset import PairedDataset
 from src.datasets.dataloader import build_valid_dataloader
 from src.runners.portrait import Runner
-from src.utils.util import set_seed
+from src.utils import set_seed
 
 
 def save_subset(dataset, save_dir, mode):

@@ -4,7 +4,7 @@ from typing import Union
 
 from diffusers.models import UNet2DConditionModel
 
-from src.models.unet_motion_model import UNetMotionModel
+from .unet_motion_model import UNetMotionModel
 
 class Net(nn.Module):
     def __init__(

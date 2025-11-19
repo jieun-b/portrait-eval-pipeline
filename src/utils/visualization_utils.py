@@ -58,8 +58,8 @@ def save_videos_grid(videos: torch.Tensor, path: str, rescale=False, n_rows=6, f
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
     save_videos_from_pil(outputs, path, fps)
-
-
+    
+    
 def save_video_frames(video, save_dir, name):
     folder = os.path.join(save_dir, name)
     os.makedirs(folder, exist_ok=True)
@@ -68,16 +68,3 @@ def save_video_frames(video, save_dir, name):
         img = (frame.cpu().numpy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8)
         Image.fromarray(img).save(os.path.join(folder, f"{i:03d}.png"))
         
-        
-def save_samples_img(sample_dicts, global_step, out_dir):
-    for sample_dict in sample_dicts:
-        name = sample_dict["name"]
-        img = sample_dict["img"]
-        img.save(os.path.join(out_dir, f"{global_step:06d}-{name}.png"))
-        
-        
-def save_samples_gif(sample_dicts, global_step, out_dir):
-    for sample_dict in sample_dicts:
-        name = sample_dict["name"]
-        vid = sample_dict["vid"]
-        save_videos_grid(vid, os.path.join(out_dir, f"{global_step:06d}-{name}.gif"))
