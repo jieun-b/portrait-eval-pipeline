@@ -1,98 +1,112 @@
 import os
-import yaml
-import torch
-import random
+import csv
 import imageio
 import numpy as np
 from tqdm import tqdm
+from omegaconf import OmegaConf
 from argparse import ArgumentParser
-from dataset.dataset import FOMM, PairedDataset
+from concurrent.futures import ThreadPoolExecutor
+
+from src.datasets.valid_dataset import PairedDataset
+from src.datasets.dataloader import build_valid_dataloader
+from src.runners.portrait import Runner
+from src.utils.util import set_seed
+
+
+def save_subset(dataset, save_dir, mode):
+    path = os.path.join(save_dir, mode, "subset_list.csv")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", newline="") as f:
+        csv.writer(f).writerows([("video_name", "start_idx"), *dataset.frame_sequences])
+    print(f"[INFO] Subset saved to {path}")
+
 
 def save_image(tensor, path):
-    img = (255 * tensor.cpu().numpy().transpose(1, 2, 0)).astype(np.uint8)
-    imageio.imsave(path, img)
+    imageio.imsave(path, tensor.astype(np.uint8))
 
-def set_seed(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    np.random.seed(seed)
-    random.seed(seed)
-    g = torch.Generator()
-    g.manual_seed(seed)
-    return g
 
-def save_self(dataset, save_dir, g):
+def save_self(dataloader, save_dir, max_workers):
     os.makedirs(save_dir, exist_ok=True)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=1, drop_last=False, generator=g)
+    for batch in tqdm(dataloader, desc="[Saving Self GT]"):
+        for i in range(len(batch['name'])):
+            name = batch['name'][i]
+            video = batch['tgt_imgs'][i].cpu().numpy() 
+            path = os.path.join(save_dir, name)
+            os.makedirs(path, exist_ok=True)
 
-    for x in tqdm(dataloader, desc="[Saving Self GT]"):
-        name = x['name'][0]
-        video = x['video'][0]  # (C, F, H, W)
-        video = video.permute(1, 0, 2, 3)  # (F, C, H, W)
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = []
+                for idx, frame in enumerate(video):
+                    save_path = os.path.join(path, f"{idx:03d}.png")
+                    futures.append(executor.submit(save_image, frame, save_path))
 
-        path = os.path.join(save_dir, name)
-        os.makedirs(path, exist_ok=True)
+                for f in futures:
+                    f.result()
 
-        for idx, frame in enumerate(video):
-            save_image(frame, os.path.join(path, f"{idx:03d}.png"))
 
-def save_cross(dataset, save_dir, g, num_pairs):
-    paired_dataset = PairedDataset(dataset, number_of_pairs=num_pairs)
-    dataloader = torch.utils.data.DataLoader(paired_dataset, batch_size=1, shuffle=False, num_workers=1, drop_last=False, generator=g)
-
+def save_cross(dataloader, save_dir, max_workers):
     driving_dir = os.path.join(save_dir, "driving")
     source_dir = os.path.join(save_dir, "source")
     os.makedirs(driving_dir, exist_ok=True)
     os.makedirs(source_dir, exist_ok=True)
 
-    for x in tqdm(dataloader, desc="[Saving Cross GT]"):
-        source_name = x['source_name'][0]
-        driving_name = x['driving_name'][0]
-        result_name = f"{driving_name}-{source_name}"
+    for batch in tqdm(dataloader, desc="[Saving Cross GT]"):
+        for i in range(len(batch['driving_name'])):
+            driving_video = batch['driving_tgt_imgs'][i].cpu().numpy()
+            source_frame = batch['source_tgt_imgs'][i, 0].cpu().numpy()
+            result_name = f"{batch['driving_name'][i]}-{batch['source_name'][i]}"
 
-        # Driving video
-        driving_video = x['driving_video'][0].permute(1, 0, 2, 3)  # (F, C, H, W)
-        driving_path = os.path.join(driving_dir, result_name)
-        os.makedirs(driving_path, exist_ok=True)
-        for idx, frame in enumerate(driving_video):
-            save_image(frame, os.path.join(driving_path, f"{idx:03d}.png"))
+            driving_path = os.path.join(driving_dir, result_name)
+            source_path = os.path.join(source_dir, result_name)
+            os.makedirs(driving_path, exist_ok=True)
+            os.makedirs(source_path, exist_ok=True)
 
-        # Source frame
-        source_frame = x['source_video'][0, :, 0, :, :]  # (C, H, W)
-        source_path = os.path.join(source_dir, result_name)
-        os.makedirs(source_path, exist_ok=True)
-        save_image(source_frame, os.path.join(source_path, "000.png"))
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = []
+                for idx, frame in enumerate(driving_video):
+                    save_path = os.path.join(driving_path, f"{idx:03d}.png")
+                    futures.append(executor.submit(save_image, frame, save_path))
+                futures.append(executor.submit(save_image, source_frame, os.path.join(source_path, "000.png")))
+
+                for f in futures:
+                    f.result()
+
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument("--mode", choices=["reconstruction", "animation"], default="reconstruction")
-    parser.add_argument("--save_dir", default="eval")
+    parser.add_argument("--mode", choices=["self", "cross"], default="self")
+    parser.add_argument("--gt_dir", type=str, default="data")
+    parser.add_argument("--save_dir", type=str, default="eval")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--batch_size", type=int, default=6)
+    parser.add_argument("--num_workers", type=int, default=8)
+    parser.add_argument("--use_subset", action="store_true", help="Use SubsetDataset for self mode")
     args = parser.parse_args()
 
-    is_full = args.mode == "reconstruction"
+    set_seed(args.seed)
 
-    config = {
-        "dataset_params": {
-            "root_dir": "./data",
-            "frame_shape": [256, 256, 3],
-            "is_full": is_full,
+    config = OmegaConf.create({
+        "data": {
+            "root_dir": args.gt_dir,
+            "sample_size": [512, 512],
             "sample_n_frames": 16,
-            "pairs_list": "final_pairs.csv",
+            "pairs_list": "cross_pairs.csv",
         },
-        "animate_params": {
-            "num_pairs": 100
-        }
-    }
-        
-    g = set_seed(args.seed)
-    dataset = FOMM(**config['dataset_params'])
-    save_path = os.path.join(args.save_dir, args.mode, "gt")
+    })
 
-    if args.mode == "animation":
-        save_cross(dataset, save_path, g, config['animate_params']['num_pairs'])
+    runner = Runner(config, batch_size=args.batch_size, num_workers=args.num_workers)
+    dataset = runner.get_dataset(args.mode, use_subset=args.use_subset)
+    if args.mode == 'self' and args.use_subset:
+        save_subset(dataset, args.save_dir, args.mode)
+
+    if args.mode == "cross":
+        paired_dataset = PairedDataset(dataset, number_of_pairs=100)
+        dataloader = build_valid_dataloader(paired_dataset, args.batch_size, args.num_workers, args.seed)
+        save_cross(dataloader, os.path.join(args.save_dir, args.mode, "gt"), args.num_workers)
     else:
-        save_self(dataset, save_path, g)
+        dataloader = build_valid_dataloader(dataset, args.batch_size, args.num_workers, args.seed)
+        save_self(dataloader, os.path.join(args.save_dir, args.mode, "gt"), args.num_workers)
+
 
 if __name__ == "__main__":
     main()

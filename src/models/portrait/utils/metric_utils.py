@@ -7,40 +7,112 @@
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
 
 import os
-import time
+import gc
 import hashlib
 import pickle
-import copy
 import uuid
-
-import numpy as np
-import torch
 import random
-from PIL import Image
-from tqdm import tqdm
-from torchvision import transforms
-
 import io
 import re
 import requests
 import html
 import glob
 import urllib
-import urllib.request
-from urllib.parse import urlparse
-from typing import Any, List, Tuple, Union, Dict
+import scipy.linalg
+import numpy as np
+import torch
 
-def load_image_sequence(folder_path, image_shape=(256, 256)):
-    transform = transforms.Compose([
-        transforms.Resize(image_shape),
-        transforms.ToTensor()
-    ])
-    images = []
-    for file in sorted(os.listdir(folder_path)):
-        if file.endswith(('.png', '.jpg', '.jpeg')):
-            img = Image.open(os.path.join(folder_path, file)).convert('RGB')
-            images.append(transform(img))
-    return torch.stack(images)
+from tqdm import tqdm
+from typing import Any
+from urllib.parse import urlparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from PIL import Image
+
+from .io_utils import load_image_sequence
+
+
+def load_tensor_pair(folder, image_shape, transform, tar_path, gen_path, src_path=None):
+    try:
+        tar_images = load_image_sequence(os.path.join(tar_path, folder))
+        tar_images = [img.resize(image_shape, Image.BICUBIC) for img in tar_images]
+        tar_tensor = torch.stack([transform(img) for img in tar_images])
+
+        gen_images = load_image_sequence(os.path.join(gen_path, folder))
+        gen_images = [img.resize(image_shape, Image.BICUBIC) for img in gen_images]
+        gen_tensor = torch.stack([transform(img) for img in gen_images])
+
+        if src_path is not None:
+            src_images = load_image_sequence(os.path.join(src_path, folder))
+            src_images = [img.resize(image_shape, Image.BICUBIC) for img in src_images]
+            src_tensor = torch.stack([transform(img) for img in src_images])
+            return folder, tar_tensor, gen_tensor, src_tensor
+
+        return folder, tar_tensor, gen_tensor
+
+    except Exception as e:
+        print(f"[ERROR] Failed to load tensors for {folder}: {e}")
+        return None
+    
+        
+@torch.no_grad()
+def compute_fvd(detector, folder_list, gt_path, gen_path, image_shape, transform, device, seeds=None, max_items=2048, batch_size=16, num_workers=4):
+    detector_kwargs = dict(rescale=True, resize=True, return_features=True)
+
+    if seeds is None:
+        seeds = [42]
+
+    fvd_scores = []
+
+    for seed in seeds:
+        random.seed(seed)
+        if max_items is not None and len(folder_list) > max_items:
+            sampled_folders = random.sample(folder_list, k=max_items)
+        else:
+            sampled_folders = folder_list
+
+        real_stats = FeatureStats(max_items=max_items, capture_mean_cov=True)
+        gen_stats = FeatureStats(max_items=max_items, capture_mean_cov=True)
+
+        for i in tqdm(range(0, len(sampled_folders), batch_size), desc=f"FVD Features (seed={seed})"):
+            batch_folders = sampled_folders[i:i + batch_size]
+
+            with ThreadPoolExecutor(max_workers=num_workers) as executor:
+                futures = [executor.submit(load_tensor_pair, folder, image_shape, transform, gt_path, gen_path) for folder in batch_folders]
+                for future in as_completed(futures):
+                    folder, gt_tensor, gen_tensor = future.result()
+                    try:
+                        if gt_tensor is None or gen_tensor is None:
+                            continue
+                        if gt_tensor.shape[0] == 0 or gen_tensor.shape[0] == 0:
+                            continue
+
+                        gt_tensor = (gt_tensor.unsqueeze(0) * 255).permute(0, 2, 1, 3, 4).contiguous().to(device)
+                        gen_tensor = (gen_tensor.unsqueeze(0) * 255).permute(0, 2, 1, 3, 4).contiguous().to(device)
+
+                        gt_feat = detector(gt_tensor, **detector_kwargs)
+                        gen_feat = detector(gen_tensor, **detector_kwargs)
+
+                        real_stats.append_torch(gt_feat, num_gpus=1, rank=0)
+                        gen_stats.append_torch(gen_feat, num_gpus=1, rank=0)
+
+                        del gt_tensor, gen_tensor, gt_feat, gen_feat
+                        torch.cuda.empty_cache()
+                    except Exception as e:
+                        print(f"[FVD GPU ERROR] Folder {folder}: {e}")
+
+        mu_real, sigma_real = real_stats.get_mean_cov()
+        mu_gen, sigma_gen = gen_stats.get_mean_cov()
+
+        m = np.square(mu_gen - mu_real).sum()
+        s, _ = scipy.linalg.sqrtm(np.dot(sigma_gen, sigma_real), disp=False)
+        fid = np.real(m + np.trace(sigma_gen + sigma_real - 2 * s))
+        fvd_scores.append(float(fid))
+
+        del real_stats, gen_stats
+        gc.collect()
+
+    return fvd_scores
+
 
 _feature_detector_cache = dict()
 
@@ -139,27 +211,6 @@ class FeatureStats:
         obj = FeatureStats(capture_all=s.capture_all, max_items=s.max_items)
         obj.__dict__.update(s)
         return obj
-
-@torch.no_grad()
-def compute_feature_stats_from_folders(
-    folder_root, folders, detector_url, detector_kwargs, device,
-    image_shape=(256, 256), capture_mean_cov=False, max_items=None,
-):
-    if max_items is not None and len(folders) > max_items:
-        folders = random.sample(folders, k=max_items)
-    
-    stats = FeatureStats(max_items=max_items, capture_mean_cov=capture_mean_cov)
-    detector = get_feature_detector(url=detector_url, device=device, num_gpus=1, rank=0, verbose=True)
-    
-    for folder in folders:
-        frames = load_image_sequence(os.path.join(folder_root, folder), image_shape).to(device)  # (T, C, H, W)
-        frames = frames.unsqueeze(0)  # (1, T, C, H, W)
-        frames = frames.permute(0, 2, 1, 3, 4).contiguous()  # → (1, C, T, H, W)
-        frames = frames * 255
-        features = detector(frames, **detector_kwargs)  # → (1, D)
-        stats.append_torch(features, num_gpus=1, rank=0)
-    
-    return stats
 
 # ------------------------------------------------------------------------------------------
 _dnnlib_cache_dir = None
